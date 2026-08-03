@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "614546250214",
+    "project_id": "etoday-38d18",
+    "storage_bucket": "etoday-38d18.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:614546250214:android:62519a37b08ad5cb159e27",
+        "android_client_info": {
+          "package_name": "com.chamjalhaesseoyo.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "614546250214-ieihfi6vdn53dqdvr8sosn1530vp2s02.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.chamjalhaesseoyo.app",
+            "certificate_hash": "d61bfbc4f66b4decd283f5ede10797c30d11f5ab"
+          }
+        },
+        {
+          "client_id": "614546250214-totrvm6lnu347br36qfplnc734fu12sv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUMFWSVt8lgZ_ZbWkmX0CfPGE3581IyBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "614546250214-totrvm6lnu347br36qfplnc734fu12sv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

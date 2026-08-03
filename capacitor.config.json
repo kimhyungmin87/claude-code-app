@@ -1,5 +1,11 @@
 {
   "appId": "com.chamjalhaesseoyo.app",
   "appName": "참 잘했어요",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": false,
+      "providers": ["google.com"]
+    }
+  }
 }

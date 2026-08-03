@@ -972,36 +972,46 @@ if ('serviceWorker' in navigator) {
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
   import {
-    getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
+    getAuth, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut
   } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
   import {
     getFirestore, doc, getDoc, setDoc
   } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
 
   const firebaseConfig = {
-    apiKey: "AIzaSyBbqXAJ-RyO4Z7FFLYQ9sKkkQnocXPeW0w",
-    authDomain: "metoday-38d18.firebaseapp.com",
-    projectId: "metoday-38d18",
-    storageBucket: "metoday-38d18.firebasestorage.app",
-    messagingSenderId: "252964652022",
-    appId: "1:252964652022:web:e78d01e79807d64f51fdd7"
+    apiKey: "AIzaSyBNkUPHH4XQRjyZRF1tMNXBYli9fLxkW4U",
+    authDomain: "etoday-38d18.firebaseapp.com",
+    projectId: "etoday-38d18",
+    storageBucket: "etoday-38d18.firebasestorage.app",
+    messagingSenderId: "614546250214",
+    appId: "1:614546250214:web:59500448cc27d42e159e27",
+    measurementId: "G-DW5NN27FTK"
   };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const provider = new GoogleAuthProvider();
 
   const loginGate = document.getElementById('loginGate');
   const loginBtn = document.getElementById('googleLoginBtn');
   const loginStatus = document.getElementById('loginStatus');
 
-  loginBtn.addEventListener('click', () => {
+  loginBtn.addEventListener('click', async () => {
     loginStatus.textContent = '로그인 창을 여는 중…';
-    signInWithPopup(auth, provider).catch((err) => {
+    try {
+      const { FirebaseAuthentication } = window.Capacitor.Plugins;
+      const result = await FirebaseAuthentication.signInWithGoogle({ useCredentialManager: false });
+      const idToken = result.credential && result.credential.idToken;
+      if (!idToken) {
+        throw new Error('구글 로그인 토큰을 받지 못했습니다.');
+      }
+      const credential = GoogleAuthProvider.credential(idToken);
+      await signInWithCredential(auth, credential);
+      // onAuthStateChanged가 호출되어 이후 처리를 이어감
+    } catch (err) {
       loginStatus.textContent = `로그인 실패: ${err.code || err.message}`;
       console.error(err);
-    });
+    }
   });
 
   onAuthStateChanged(auth, async (user) => {
@@ -1037,8 +1047,10 @@ if ('serviceWorker' in navigator) {
     }).catch((err) => console.error('저장 실패', err));
   };
 
-  window.appSignOut = function () {
-    signOut(auth);
+  window.appSignOut = async function () {
+    const { FirebaseAuthentication } = window.Capacitor.Plugins;
+    await FirebaseAuthentication.signOut();
+    await signOut(auth);
   };
 </script>
 </body>
