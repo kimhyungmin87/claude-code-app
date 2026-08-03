@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">참 잘했어요</string>
+    <string name="title_activity_main">참 잘했어요</string>
+    <string name="package_name">com.chamjalhaesseoyo.app</string>
+    <string name="custom_url_scheme">com.chamjalhaesseoyo.app</string>
+</resources>

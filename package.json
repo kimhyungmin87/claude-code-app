@@ -1,0 +1,15 @@
+{
+  "name": "cham-jalhaesseoyo",
+  "version": "1.0.0",
+  "description": "참 잘했어요 — 힐링 톤 습관 트래커",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@capacitor/android": "8.5.0",
+    "@capacitor/cli": "8.5.0",
+    "@capacitor/core": "8.5.0"
+  }
+}

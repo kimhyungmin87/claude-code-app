@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>참 잘했어요 — 데모</title>
+
+<!-- PWA: 홈 화면에 설치 가능하게 만드는 설정 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0E1013">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="잘했어요">
+<link rel="icon" href="icons/icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1013;
+    --bg-elevated:#15181C;
+    --bg-card:#1B1F25;
+    --line:#262B32;
+    --text:#F2F1ED;
+    --text-dim:#9297A0;
+    --text-faint:#565B63;
+    --lime:#B9FF66;
+    --violet:#8B7CFF;
+    --l0:#1A1E23;
+    --l1:#1B4332;
+    --l2:#2D6A4F;
+    --l3:#40916C;
+    --l4:#B9FF66;
+    --future:#15181C;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:#050609;
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:32px 16px;
+    font-family:'Inter', ui-sans-serif, system-ui, sans-serif;
+    position:relative;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:'';
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:520px; height:520px;
+    background:radial-gradient(circle, rgba(185,255,102,.10), transparent 60%),
+               radial-gradient(circle at 70% 30%, rgba(139,124,255,.10), transparent 55%);
+    pointer-events:none;
+  }
+  .caption-outside{
+    position:fixed; top:20px; left:50%; transform:translateX(-50%);
+    font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.06em;
+    color:var(--text-faint); text-transform:uppercase;
+  }
+  .phone{
+    width:390px; height:844px;
+    background:var(--bg);
+    border-radius:46px;
+    border:9px solid #000;
+    box-shadow:0 50px 100px rgba(0,0,0,.65), 0 0 0 1.5px #23262b inset;
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+    z-index:1;
+  }
+  .notch{
+    position:absolute; top:0; left:50%; transform:translateX(-50%);
+    width:130px; height:24px; background:#000; border-radius:0 0 18px 18px; z-index:30;
+  }
+  .statusbar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 26px 4px; flex-shrink:0;
+    font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text);
+  }
+  .statusbar .icons{display:flex; gap:5px; align-items:center;}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 22px 6px; flex-shrink:0;
+  }
+  .wordmark{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:15px; color:var(--text);
+    display:flex; align-items:center; gap:6px;
+  }
+  .wordmark .dot{width:6px; height:6px; border-radius:50%; background:var(--lime);}
+  .topbar-date{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-faint); letter-spacing:.04em;
+  }
+  .screen{
+    flex:1; overflow-y:auto; padding:6px 22px 20px;
+    display:none;
+  }
+  .screen.active{display:block;}
+
+  /* ---- HOME ---- */
+  .section-eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-faint);
+    letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px;
+  }
+  .section-title{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:22px; color:var(--text);
+    margin-bottom:18px;
+  }
+  .promise-row{
+    display:flex; align-items:center; gap:12px;
+    padding:13px 0; border-bottom:1px solid var(--line);
+  }
+  .check{
+    width:23px; height:23px; border-radius:50%; flex-shrink:0;
+    border:2px solid var(--text-faint);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:background .15s, border-color .15s, transform .1s;
+    background:transparent;
+  }
+  .check:active{transform:scale(.9);}
+  .check.done{background:var(--lime); border-color:var(--lime);}
+  .check svg{width:12px; height:12px; stroke:var(--bg); opacity:0; transition:opacity .1s;}
+  .check.done svg{opacity:1;}
+  .promise-text{font-size:15px; color:var(--text); transition:color .15s;}
+  .promise-text.done{color:var(--text-faint); text-decoration:line-through;}
+  .remove-btn{
+    margin-left:auto; background:none; border:none; color:var(--text-faint);
+    font-size:16px; cursor:pointer; padding:4px 8px;
+  }
+  .add-row{
+    display:flex; gap:8px; margin-top:16px;
+  }
+  .add-row input{
+    flex:1; background:var(--bg-card); border:1px solid var(--line); border-radius:10px;
+    padding:11px 13px; color:var(--text); font-family:'Inter'; font-size:14px; outline:none;
+  }
+  .add-row input:focus{border-color:var(--violet);}
+  .add-row button{
+    background:var(--violet); color:#0E1013; border:none; border-radius:10px;
+    padding:0 16px; font-family:'Space Grotesk'; font-weight:600; font-size:13px; cursor:pointer;
+  }
+  .today-preview{
+    margin-top:22px; background:var(--bg-card); border:1px solid var(--line); border-radius:14px;
+    padding:14px 16px; display:flex; align-items:center; gap:12px;
+  }
+  .today-preview .swatch{
+    width:26px; height:26px; border-radius:6px; flex-shrink:0; transition:background .2s;
+  }
+  .today-preview .txt{font-size:12.5px; color:var(--text-dim); line-height:1.4;}
+  .today-preview .txt b{color:var(--text); font-weight:600;}
+  .eye-toggle{
+    background:none; border:none; color:var(--text-faint); cursor:pointer; padding:4px; flex-shrink:0;
+    display:flex; align-items:center;
+  }
+  .eye-toggle.public{color:var(--violet);}
+  .eye-toggle svg{width:17px; height:17px;}
+
+  /* ---- 메이트(파트너) 카드 ---- */
+  .partner-card{
+    margin-top:14px; background:var(--bg-card); border:1px solid var(--line); border-radius:14px;
+    padding:16px;
+  }
+  .partner-title{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:14px; color:var(--text);
+    display:flex; align-items:center; gap:6px; margin-bottom:8px;
+  }
+  .partner-title .dot{width:6px; height:6px; border-radius:50%; background:var(--violet);}
+  .partner-sub{font-size:12px; color:var(--text-dim); margin-bottom:12px; line-height:1.5;}
+  .chip-row{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;}
+  .chip-row.dim{opacity:.4;}
+  .chip{
+    background:rgba(139,124,255,.10); border:1px solid rgba(139,124,255,.25); color:var(--text-dim);
+    font-size:11.5px; padding:5px 10px; border-radius:20px;
+  }
+  .chip.locked{color:var(--text-faint); border-style:dashed;}
+  .partner-actions{display:flex; gap:8px;}
+  .pill-btn{
+    flex:1; background:var(--bg-elevated); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:10px 8px; font-family:'Inter'; font-size:12px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:6px; text-align:center;
+  }
+  .pill-btn.sent{background:rgba(185,255,102,.12); border-color:var(--l1); color:var(--lime);}
+  .pill-btn:disabled{opacity:.6; cursor:default;}
+  .cheer-log{
+    margin-top:10px; font-size:12px; color:var(--text-dim); background:var(--bg-elevated);
+    border-radius:10px; padding:9px 11px; line-height:1.5;
+  }
+  .complete-prompt{
+    margin-top:12px; background:rgba(185,255,102,.08); border:1px solid var(--l1); border-radius:10px;
+    padding:11px 13px; font-size:12.5px; color:var(--text); line-height:1.5;
+  }
+  .complete-prompt button{
+    margin-top:8px; width:100%; background:var(--lime); color:#0E1013; border:none; border-radius:8px;
+    padding:9px; font-family:'Space Grotesk'; font-weight:600; font-size:12.5px; cursor:pointer;
+  }
+  .no-match-card{
+    margin-top:14px; background:var(--bg-card); border:1px dashed var(--line); border-radius:14px;
+    padding:22px 16px; text-align:center;
+  }
+  .no-match-card .icon{font-size:22px; margin-bottom:8px;}
+  .no-match-card .msg{font-size:12.5px; color:var(--text-dim); line-height:1.6;}
+  .demo-toggle-link{
+    display:block; text-align:center; margin-top:12px; font-size:11px; color:var(--text-faint);
+    background:none; border:none; cursor:pointer; width:100%;
+    text-decoration:underline; text-underline-offset:3px;
+  }
+  .disable-link{
+    display:block; text-align:center; margin-top:8px; font-size:11px; color:var(--text-faint);
+    background:none; border:none; cursor:pointer; width:100%;
+  }
+  .sample-badge{
+    font-family:'JetBrains Mono'; font-size:9px; background:var(--bg-elevated); border:1px solid var(--line);
+    padding:2px 7px; border-radius:20px; color:var(--text-faint); font-weight:400;
+  }
+  .verify-cta{
+    width:100%; margin-top:2px; background:var(--violet); color:#0E1013; border:none; border-radius:10px;
+    padding:12px; font-family:'Space Grotesk'; font-weight:600; font-size:13px; cursor:pointer;
+  }
+  .sample-preview{opacity:.45; pointer-events:none; margin-bottom:12px;}
+  .sample-preview .partner-sub{margin-bottom:10px;}
+  .gender-note{font-size:10.5px; color:var(--text-faint); line-height:1.5; margin-top:-2px;}
+  .gender-tag{font-weight:700; font-size:13px;}
+  .gender-tag.male{color:#4DA3FF;}
+  .gender-tag.female{color:#FF5C7A;}
+  .verify-form{display:flex; flex-direction:column; gap:8px; margin-top:4px;}
+  .verify-form label{font-size:11px; color:var(--text-dim); margin-top:6px;}
+  .gender-select{display:flex; gap:8px;}
+  .gender-opt{
+    flex:1; background:var(--bg-elevated); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:10px; font-family:'Inter'; font-size:13px; cursor:pointer;
+  }
+  .gender-opt.sel{border-color:var(--violet); background:rgba(139,124,255,.15); color:var(--violet); font-weight:600;}
+  .verify-form select, .verify-form input[type="date"]{
+    background:var(--bg-elevated); border:1px solid var(--line); border-radius:10px; color:var(--text);
+    padding:10px 12px; font-family:'Inter'; font-size:13px; width:100%;
+  }
+  .verify-error{font-size:11px; color:#FF6B6B; min-height:14px;}
+  .verify-submit{
+    margin-top:6px; background:var(--lime); color:#0E1013; border:none; border-radius:10px;
+    padding:12px; font-family:'Space Grotesk'; font-weight:600; font-size:13px; cursor:pointer;
+  }
+  .verifying-box{text-align:center; padding:14px 0;}
+  .verifying-spinner{
+    width:26px; height:26px; margin:0 auto 12px; border-radius:50%;
+    border:3px solid var(--line); border-top-color:var(--violet);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  /* ---- BOARD ---- */
+  .stat-row{display:flex; gap:10px; margin-bottom:20px;}
+  .stat-card{
+    flex:1; background:var(--bg-card); border:1px solid var(--line); border-radius:14px;
+    padding:14px 16px;
+  }
+  .stat-num{font-family:'JetBrains Mono'; font-weight:600; font-size:26px; color:var(--lime);}
+  .stat-card.alt .stat-num{color:var(--violet);}
+  .stat-label{font-size:11px; color:var(--text-dim); margin-top:4px; letter-spacing:.02em;}
+  .grid-wrap{
+    background:var(--bg-card); border:1px solid var(--line); border-radius:16px;
+    padding:16px; margin-bottom:14px;
+  }
+  .grass-grid{display:flex; gap:3px;}
+  .grass-col{display:flex; flex-direction:column; gap:3px;}
+  .cell{width:21px; height:21px; border-radius:5px; background:var(--l0); transition:background .25s;}
+  .l0{background:var(--l0);}
+  .l1{background:var(--l1);}
+  .l2{background:var(--l2);}
+  .l3{background:var(--l3);}
+  .l4{background:var(--l4); box-shadow:0 0 8px rgba(185,255,102,.5);}
+  .future{background:var(--future); border:1px dashed #2A2F37;}
+  .legend{display:flex; align-items:center; gap:6px; margin-top:12px; font-size:10.5px; color:var(--text-faint); font-family:'JetBrains Mono';}
+  .legend .cell{width:11px; height:11px; border-radius:3px;}
+  .share-btn{
+    width:100%; background:var(--violet); color:#0E1013; border:none; border-radius:12px;
+    padding:14px; font-family:'Space Grotesk'; font-weight:600; font-size:14px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+
+  /* ---- GALLERY ---- */
+  .season-card{
+    background:var(--bg-card); border:1px solid var(--line); border-radius:16px;
+    padding:16px; margin-bottom:14px;
+  }
+  .season-card-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+  .season-name{font-family:'Space Grotesk'; font-weight:600; font-size:15px; color:var(--text);}
+  .season-date{font-family:'JetBrains Mono'; font-size:10.5px; color:var(--text-faint); margin-top:2px;}
+  .badge{
+    font-family:'JetBrains Mono'; font-size:10px; color:var(--lime);
+    border:1px solid var(--l1); background:rgba(185,255,102,.08);
+    padding:4px 9px; border-radius:20px; letter-spacing:.03em;
+  }
+  .mini-grid{display:flex; gap:1.5px;}
+  .mini-col{display:flex; flex-direction:column; gap:1.5px;}
+  .mini-cell{width:7px; height:7px; border-radius:2px;}
+
+  /* ---- BOTTOM NAV ---- */
+  .bottomnav{
+    display:flex; border-top:1px solid var(--line); background:var(--bg-elevated);
+    padding:10px 6px 20px; flex-shrink:0;
+  }
+  .login-gate{
+    position:absolute; inset:0; z-index:100; background:var(--bg);
+    display:flex; align-items:center; justify-content:center; padding:32px;
+  }
+  .login-box{ text-align:center; display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .login-box .wordmark{ font-size:19px; }
+  .login-msg{ font-size:13px; color:var(--text-dim); line-height:1.6; }
+  .google-btn{
+    background:var(--violet); color:#0E1013; border:none; border-radius:12px;
+    padding:14px 30px; font-family:'Space Grotesk'; font-weight:600; font-size:14px; cursor:pointer;
+  }
+  .login-status{ font-size:11.5px; color:var(--text-faint); min-height:16px; }
+  .navbtn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+    background:none; border:none; color:var(--text-faint); cursor:pointer;
+    font-family:'Inter'; font-size:10.5px; padding:4px 0;
+  }
+  .navbtn svg{width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.8;}
+  .navbtn.active{color:var(--lime);}
+
+  /* ---- SHARE MODAL ---- */
+  .modal{
+    position:absolute; inset:0; background:rgba(5,6,9,.88); backdrop-filter:blur(6px);
+    display:none; align-items:center; justify-content:center; z-index:40; padding:30px 24px;
+  }
+  .modal.open{display:flex;}
+  .share-card{
+    width:100%; background:linear-gradient(160deg,#171A1F,#0E1013);
+    border:1px solid var(--line); border-radius:20px; padding:24px 20px;
+    position:relative;
+  }
+  .modal-close{
+    position:absolute; top:14px; right:14px; background:none; border:none;
+    color:var(--text-faint); cursor:pointer; width:26px; height:26px;
+  }
+  .share-caption{font-size:13.5px; color:var(--text); margin:16px 0 4px; line-height:1.5;}
+  .share-note{font-size:10.5px; color:var(--text-faint); margin-top:14px; line-height:1.5; font-style:italic;}
+  .cheer-list{display:flex; flex-direction:column; gap:10px; margin-top:18px;}
+  .cheer-option{
+    background:var(--bg-card); border:1px solid var(--line); border-radius:12px;
+    padding:13px 14px; color:var(--text); font-size:13.5px; text-align:left; cursor:pointer; line-height:1.5;
+    font-family:'Inter';
+  }
+  .cheer-option:active{border-color:var(--violet);}
+
+  /* 실제 스마트폰(좁은 화면)에서는 가짜 폰 프레임을 걷어내고 화면 전체를 꽉 채움 */
+  @media (max-width: 480px){
+    body{padding:0; align-items:stretch; justify-content:stretch;}
+    body::before{display:none;}
+    .caption-outside{display:none;}
+    .phone{
+      width:100vw; height:100vh; height:100dvh;
+      border:none; border-radius:0; box-shadow:none; margin:0;
+    }
+    .notch{display:none;}
+    .statusbar{display:none;}
+    .topbar{padding-top:calc(14px + env(safe-area-inset-top));}
+    .bottomnav{padding-bottom:calc(10px + env(safe-area-inset-bottom));}
+  }
+</style>
+</head>
+<body>
+<div class="caption-outside">프로토타입 · 새로고침하면 데이터는 초기화돼요</div>
+<div class="phone">
+  <div class="notch"></div>
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="icons">▂▄▆ 5G 🔋</span>
+  </div>
+  <div class="topbar">
+    <span class="wordmark"><span class="dot"></span>참 잘했어요</span>
+    <span class="topbar-date" id="topbarDate">07.29 WED</span>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="section-eyebrow">TODAY · DAY 63</div>
+    <div class="section-title">오늘의 약속</div>
+    <div id="promiseList"></div>
+    <div class="add-row">
+      <input type="text" id="newPromiseInput" placeholder="작은 약속 하나 추가하기">
+      <button onclick="addPromise()">추가</button>
+    </div>
+    <div class="today-preview">
+      <div class="swatch" id="todaySwatch"></div>
+      <div class="txt">오늘 <b id="todayFraction">0/3</b> 완료 · 이 색으로 오늘 칸이 채워져요</div>
+    </div>
+    <div id="partnerSection"></div>
+  </div>
+
+  <!-- BOARD -->
+  <div class="screen" id="screen-board">
+    <div class="section-eyebrow">SEASON 03</div>
+    <div class="section-title">잔디밭</div>
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-num" id="streakNum">0</div>
+        <div class="stat-label">연속으로 지킨 날</div>
+      </div>
+      <div class="stat-card alt">
+        <div class="stat-num" id="progressNum">63/91</div>
+        <div class="stat-label">이번 시즌 진행률</div>
+      </div>
+    </div>
+    <div class="grid-wrap">
+      <div class="grass-grid" id="mainGrid"></div>
+      <div class="legend">
+        <span>적음</span>
+        <span class="cell l0"></span><span class="cell l1"></span><span class="cell l2"></span><span class="cell l3"></span><span class="cell l4"></span>
+        <span>많음</span>
+      </div>
+    </div>
+    <button class="share-btn" onclick="openShare()">
+      공유 카드 만들기
+    </button>
+  </div>
+
+  <!-- GALLERY -->
+  <div class="screen" id="screen-gallery">
+    <div class="section-eyebrow">ARCHIVE</div>
+    <div class="section-title">지난 시즌들</div>
+    <div id="galleryList"></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottomnav">
+    <button class="navbtn active" data-tab="home" onclick="switchTab('home')">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      홈
+    </button>
+    <button class="navbtn" data-tab="board" onclick="switchTab('board')">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>
+      보드
+    </button>
+    <button class="navbtn" data-tab="gallery" onclick="switchTab('gallery')">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="15" height="15" rx="2"/><path d="M8 6V3h13v13h-2"/></svg>
+      갤러리
+    </button>
+  </div>
+
+  <!-- LOGIN GATE -->
+  <div class="login-gate" id="loginGate">
+    <div class="login-box">
+      <span class="wordmark"><span class="dot"></span>참 잘했어요</span>
+      <p class="login-msg">로그인하면 내 기록이 저장되고,<br>다른 기기에서도 이어볼 수 있어요.</p>
+      <button class="google-btn" id="googleLoginBtn">Google로 시작하기</button>
+      <p class="login-status" id="loginStatus"></p>
+    </div>
+  </div>
+
+  <!-- SHARE MODAL -->
+  <div class="modal" id="shareModal">
+    <div class="share-card">
+      <button class="modal-close" onclick="closeShare()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+      </button>
+      <span class="wordmark"><span class="dot"></span>참 잘했어요</span>
+      <div class="stat-row" style="margin-top:16px;">
+        <div class="stat-card">
+          <div class="stat-num" id="shareStreak">0</div>
+          <div class="stat-label">연속 일수</div>
+        </div>
+        <div class="stat-card alt">
+          <div class="stat-num" id="shareProgress">63/91</div>
+          <div class="stat-label">시즌 진행률</div>
+        </div>
+      </div>
+      <div class="grid-wrap" style="margin-top:12px;">
+        <div class="grass-grid" id="shareGrid"></div>
+      </div>
+      <div class="share-caption" id="shareCaption">시즌 3, 벌써 두 달째 잔디 심는 중 🌱</div>
+      <div class="share-note">데모 화면이에요 — 실제 앱에서는 이 카드를 이미지로 저장·공유하는 기능이 연결될 예정입니다.</div>
+    </div>
+  </div>
+
+  <!-- CHEER MODAL -->
+  <div class="modal" id="cheerModal">
+    <div class="share-card">
+      <button class="modal-close" onclick="closeCheer()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+      </button>
+      <span class="wordmark"><span class="dot"></span>응원 한마디</span>
+      <div class="cheer-list" id="cheerList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- seeded random ---------- */
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const SEASON_TOTAL = 91; // 13주 x 7일
+const TODAY_INDEX = 62;  // 0-based, 63일차
+
+/* 오늘의 약속 (라이브 상태) */
+let promises = [
+  {id:1, text:'물 두 잔 마시기', done:false, public:true},
+  {id:2, text:'10분 스트레칭', done:false, public:true},
+  {id:3, text:'밤 9시 이후 야식 참기', done:false, public:false},
+];
+let nextId = 4;
+
+const EYE_OPEN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_CLOSED_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.6 21.6 0 0 1 5.06-5.94M9.9 4.24A10.4 10.4 0 0 1 12 4c7 0 11 7 11 7a21.6 21.6 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+/* 메이트(파트너) 관련 데모 상태 — 실제로는 서버에서 매칭/저장될 값들 */
+const partnerPromises = [
+  {text:'아침 30분 일찍 일어나기', public:true},
+  {text:'물 한 잔 마시고 시작하기', public:true},
+  {text:'저녁에 일기 쓰기', public:false},
+];
+const CHEER_START = [
+  '작은 한 걸음이, 큰 변화가 돼요',
+  '꾸준함이 제일 어렵고, 제일 위대해요',
+  '나와 당신을 응원해요',
+];
+const CHEER_DONE = [
+  '오늘의 약속, 다 지켰어요!',
+  '작은 걸음을 오늘도 완성했어요',
+  '당신 덕분에 저도 끝까지 해냈어요',
+];
+let matchState = 'matched';    // 'matched' | 'no-match'
+let tomorrowState = 'idle';    // 'idle' | 'pending' | 'confirmed'
+let sentStartCheer = false;
+let sentDoneCheer = false;
+let receivedLog = [];
+let cheerKind = null;
+
+/* 메이트 매칭 활성화 상태 — 기본은 비활성(샘플만 보임) */
+let mateActive = false;
+let verifyStep = null;   // null | 'form' | 'verifying'
+let myProfile = { gender: '', region: '', birthdate: '' };
+let partnerGender = 'F';
+let verifyError = '';
+
+/* 과거 91일 히스토리 생성 (63일차 이전은 이미 지나온 날, 이후는 미래) */
+function genHistory(seed, total, todayIdx){
+  const rand = mulberry32(seed);
+  const ratios = [];
+  for(let i=0; i<total; i++){
+    if(i > todayIdx){ ratios.push(null); continue; } // 미래
+    if(i === todayIdx){ ratios.push(-1); continue; } // 오늘(라이브 계산)
+    const t = i/(todayIdx-1);
+    const activeChance = 0.32 + 0.55*t;
+    if(rand() < activeChance){
+      let comp = 0.45 + 0.5*t + (rand()-0.5)*0.35;
+      comp = Math.max(0.3, Math.min(1, comp));
+      ratios.push(comp);
+    } else {
+      ratios.push(0);
+    }
+  }
+  return ratios;
+}
+
+function genFullSeason(seed, total){
+  const rand = mulberry32(seed);
+  const ratios = [];
+  for(let i=0;i<total;i++){
+    if(rand() < 0.88){
+      let comp = 0.6 + rand()*0.4;
+      ratios.push(comp);
+    } else {
+      ratios.push(rand()<0.5 ? 0 : 0.3);
+    }
+  }
+  return ratios;
+}
+
+let history = genHistory(7, SEASON_TOTAL, TODAY_INDEX);
+
+function levelClassForRatio(r){
+  if(r === null) return 'future';
+  if(r === 0) return 'l0';
+  if(r <= 0.34) return 'l1';
+  if(r <= 0.67) return 'l2';
+  if(r < 0.999) return 'l3';
+  return 'l4';
+}
+
+function todayRatio(){
+  if(promises.length === 0) return 0;
+  const done = promises.filter(p=>p.done).length;
+  return done / promises.length;
+}
+
+/* ---------- 렌더: 오늘의 약속 리스트 ---------- */
+function renderPromises(){
+  const list = document.getElementById('promiseList');
+  list.innerHTML = '';
+  promises.forEach(p=>{
+    const row = document.createElement('div');
+    row.className = 'promise-row';
+    row.innerHTML = `
+      <div class="check ${p.done?'done':''}" onclick="toggleDone(${p.id})">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="promise-text ${p.done?'done':''}">${p.text}</div>
+      <button class="eye-toggle ${p.public?'public':''}" onclick="togglePublic(${p.id})" title="${p.public?'메이트에게 공개':'메이트에게 비공개'}">${p.public?EYE_OPEN_SVG:EYE_CLOSED_SVG}</button>
+      <button class="remove-btn" onclick="removePromise(${p.id})">×</button>
+    `;
+    list.appendChild(row);
+  });
+  const done = promises.filter(p=>p.done).length;
+  document.getElementById('todayFraction').textContent = `${done}/${promises.length}`;
+}
+
+function toggleDone(id){
+  const p = promises.find(p=>p.id===id);
+  if(p) p.done = !p.done;
+  renderPromises();
+  updateAll();
+  if (typeof window.saveToCloud === 'function') window.saveToCloud();
+}
+
+function removePromise(id){
+  promises = promises.filter(p=>p.id!==id);
+  renderPromises();
+  updateAll();
+  if (typeof window.saveToCloud === 'function') window.saveToCloud();
+}
+
+function togglePublic(id){
+  const p = promises.find(p=>p.id===id);
+  if(p) p.public = !p.public;
+  renderPromises();
+  if (typeof window.saveToCloud === 'function') window.saveToCloud();
+}
+
+function loadPromisesFromCloud(arr){
+  if(Array.isArray(arr) && arr.length > 0){
+    promises = arr;
+    nextId = Math.max(...arr.map(p=>p.id), 0) + 1;
+  }
+  renderPromises();
+  updateAll();
+}
+
+function getPromisesForSave(){
+  return promises;
+}
+
+function addPromise(){
+  const input = document.getElementById('newPromiseInput');
+  const val = input.value.trim();
+  if(!val) return;
+  promises.push({id:nextId++, text:val, done:false, public:true});
+  input.value = '';
+  renderPromises();
+  updateAll();
+  if (typeof window.saveToCloud === 'function') window.saveToCloud();
+}
+document.getElementById('newPromiseInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') addPromise();
+});
+
+/* ---------- 렌더: 잔디 그리드 ---------- */
+function buildGrid(containerId, ratios, cellClass){
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const cols = Math.ceil(ratios.length/7);
+  for(let c=0;c<cols;c++){
+    const col = document.createElement('div');
+    col.className = containerId==='mainGrid' || containerId==='shareGrid' ? 'grass-col' : 'mini-col';
+    for(let r=0;r<7;r++){
+      const idx = c*7+r;
+      if(idx >= ratios.length) break;
+      const raw = ratios[idx];
+      const ratio = raw === -1 ? todayRatio() : raw;
+      const cell = document.createElement('div');
+      cell.className = `${cellClass} ${levelClassForRatio(ratio)}`;
+      if(idx === TODAY_INDEX) cell.title = `오늘 · ${Math.round(todayRatio()*100)}%`;
+      else if(ratio === null) cell.title = '아직 오지 않은 날';
+      else cell.title = `Day ${idx+1} · ${Math.round((ratio||0)*100)}%`;
+      col.appendChild(cell);
+    }
+    container.appendChild(col);
+  }
+}
+
+function currentStreak(){
+  let streak = 0;
+  const todayR = todayRatio();
+  if(todayR > 0) streak = 1; else return 0;
+  for(let i=TODAY_INDEX-1; i>=0; i--){
+    if(history[i] > 0) streak++; else break;
+  }
+  return streak;
+}
+
+function updateAll(){
+  buildGrid('mainGrid', history, 'cell');
+  buildGrid('shareGrid', history, 'cell');
+  const streak = currentStreak();
+  document.getElementById('streakNum').textContent = streak;
+  document.getElementById('shareStreak').textContent = streak;
+  const doneDays = history.slice(0,TODAY_INDEX).filter(r=>r>0).length + (todayRatio()>0?1:0);
+  const progressText = `${TODAY_INDEX+1}/${SEASON_TOTAL}`;
+  document.getElementById('progressNum').textContent = progressText;
+  document.getElementById('shareProgress').textContent = progressText;
+  const swatch = document.getElementById('todaySwatch');
+  const lv = levelClassForRatio(todayRatio());
+  swatch.style.background = `var(--${lv==='l0'?'l0':lv})`;
+  document.getElementById('shareCaption').textContent = `시즌 3, ${streak}일 연속으로 잔디 심는 중 🌱`;
+  renderPartnerSection();
+}
+
+/* ---------- 갤러리 ---------- */
+function renderGallery(){
+  const seasons = [
+    {name:'SEASON 01', date:'2026.01.05 – 2026.04.05', seed:101},
+    {name:'SEASON 02', date:'2026.04.06 – 2026.07.06', seed:202},
+  ];
+  const wrap = document.getElementById('galleryList');
+  wrap.innerHTML = '';
+  seasons.forEach((s, idx)=>{
+    const ratios = genFullSeason(s.seed, SEASON_TOTAL);
+    const card = document.createElement('div');
+    card.className = 'season-card';
+    const gridId = `galleryGrid${idx}`;
+    card.innerHTML = `
+      <div class="season-card-head">
+        <div>
+          <div class="season-name">${s.name}</div>
+          <div class="season-date">${s.date}</div>
+        </div>
+        <span class="badge">완료</span>
+      </div>
+      <div class="mini-grid" id="${gridId}"></div>
+    `;
+    wrap.appendChild(card);
+    buildGrid(gridId, ratios, 'mini-cell');
+  });
+}
+
+/* ---------- 메이트(파트너) 섹션 ---------- */
+const REGIONS = ['서울','경기','인천','부산','대구','대전','광주','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주'];
+
+function renderPartnerSection(){
+  const wrap = document.getElementById('partnerSection');
+  if(!wrap) return;
+
+  /* 1. 인증 폼 입력 중 */
+  if(verifyStep === 'form'){
+    wrap.innerHTML = `
+      <div class="partner-card">
+        <div class="partner-title"><span class="dot"></span>정보입력 후 본인인증하기</div>
+        <div class="verify-form">
+          <label>성별</label>
+          <div class="gender-select">
+            <button class="gender-opt ${myProfile.gender==='M'?'sel':''}" onclick="setGender('M')">남성</button>
+            <button class="gender-opt ${myProfile.gender==='F'?'sel':''}" onclick="setGender('F')">여성</button>
+          </div>
+          <div class="gender-note">성별은 매칭 조건이 아니라 화면 표시용이에요. 매칭 상대는 완전 랜덤으로 정해져요.</div>
+          <label>지역</label>
+          <select id="regionSelect">
+            <option value="">선택해주세요</option>
+            ${REGIONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
+          </select>
+          <label>생년월일</label>
+          <input type="date" id="birthdateInput">
+          <div class="verify-error">${verifyError}</div>
+          <button class="verify-submit" onclick="submitVerifyForm()">본인인증 진행하기</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  /* 2. 인증 처리 중 (데모용 시뮬레이션) */
+  if(verifyStep === 'verifying'){
+    wrap.innerHTML = `
+      <div class="partner-card">
+        <div class="verifying-box">
+          <div class="verifying-spinner"></div>
+          <div>본인인증 처리 중…</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  /* 3. 비활성 상태 — 샘플 화면만 보여줌 (실제와 동일한 레이아웃을 흐리게 미리보기) */
+  if(!mateActive){
+    const publicCountSample = partnerPromises.filter(p=>p.public).length;
+    const sampleChips = partnerPromises.map(p=>{
+      return p.public
+        ? `<span class="chip">${p.text}</span>`
+        : `<span class="chip locked">비공개 약속</span>`;
+    }).join('');
+    wrap.innerHTML = `
+      <div class="partner-card">
+        <div class="partner-title">오늘의 프로젝트 메이트 <span class="sample-badge">샘플</span></div>
+        <div class="partner-sub" style="margin-bottom:10px;">이건 샘플 화면이에요. 본인인증 전에는 실제 메이트 매칭이 작동하지 않아요.</div>
+        <div class="sample-preview">
+          <div class="partner-sub">메이트도 오늘 ${partnerPromises.length}개의 약속을 세웠어요 · 공개 ${publicCountSample}개</div>
+          <div class="chip-row">${sampleChips}</div>
+          <div class="partner-actions">
+            <button class="pill-btn" disabled>응원 보내기</button>
+            <button class="pill-btn" disabled>내일도 만나기</button>
+          </div>
+        </div>
+        <button class="verify-cta" onclick="startVerify()">본인인증하고 실제 메이트 매칭하기</button>
+      </div>
+    `;
+    return;
+  }
+
+  /* 4. 활성 상태 — 실제(데모상) 메이트 매칭 */
+  if(matchState === 'no-match'){
+    wrap.innerHTML = `
+      <div class="no-match-card">
+        <div class="icon">🌙</div>
+        <div class="msg">오늘은 인원이 홀수라 메이트를 만나지 못했어요.<br>내일 다시 매칭해드릴게요.</div>
+        <button class="demo-toggle-link" onclick="toggleMatchDemo()">데모: 매칭된 날로 보기 →</button>
+        <button class="disable-link" onclick="disableMate()">메이트 받지 않기</button>
+      </div>
+    `;
+    return;
+  }
+
+  const publicCount = partnerPromises.filter(p=>p.public).length;
+  const chips = partnerPromises.map(p=>{
+    return p.public
+      ? `<span class="chip">${p.text}</span>`
+      : `<span class="chip locked">비공개 약속</span>`;
+  }).join('');
+  const allDone = todayRatio() === 1;
+  const genderSymbol = partnerGender === 'M' ? '♂' : '♀';
+  const genderClass = partnerGender === 'M' ? 'male' : 'female';
+
+  wrap.innerHTML = `
+    <div class="partner-card">
+      <div class="partner-title"><span class="dot"></span>오늘의 프로젝트 메이트 <span class="gender-tag ${genderClass}">${genderSymbol}</span></div>
+      <div class="partner-sub">메이트도 오늘 ${partnerPromises.length}개의 약속을 세웠어요 · 공개 ${publicCount}개</div>
+      <div class="chip-row">${chips}</div>
+      <div class="partner-actions">
+        <button class="pill-btn ${sentStartCheer?'sent':''}" ${sentStartCheer?'disabled':''} onclick="openCheer('start')">${sentStartCheer?'응원 보냄 ✓':'응원 보내기'}</button>
+        <button class="pill-btn" onclick="toggleTomorrow()">${tomorrowLabel()}</button>
+      </div>
+      ${receivedLogHTML()}
+      ${allDone && !sentDoneCheer ? `
+        <div class="complete-prompt">
+          오늘 약속을 모두 지켰어요! 메이트에게 완료 소식을 보내볼까요?
+          <button onclick="openCheer('done')">완료 소식 보내기</button>
+        </div>` : ''}
+      <button class="demo-toggle-link" onclick="toggleMatchDemo()">데모: 매칭 안 된 날로 보기 →</button>
+      <button class="disable-link" onclick="disableMate()">메이트 받지 않기</button>
+    </div>
+  `;
+}
+
+function startVerify(){
+  verifyStep = 'form';
+  verifyError = '';
+  renderPartnerSection();
+}
+
+function setGender(g){
+  myProfile.gender = g;
+  renderPartnerSection();
+}
+
+function submitVerifyForm(){
+  const region = document.getElementById('regionSelect').value;
+  const birth = document.getElementById('birthdateInput').value;
+  if(!myProfile.gender || !region || !birth){
+    verifyError = '성별, 지역, 생년월일을 모두 입력해주세요.';
+    renderPartnerSection();
+    return;
+  }
+  myProfile.region = region;
+  myProfile.birthdate = birth;
+  verifyError = '';
+  verifyStep = 'verifying';
+  renderPartnerSection();
+  /* 데모용: 실제로는 여기서 유료 본인인증 API를 호출합니다 */
+  setTimeout(()=>{
+    mateActive = true;
+    verifyStep = null;
+    partnerGender = Math.random() < 0.5 ? 'M' : 'F';
+    renderPartnerSection();
+  }, 1500);
+}
+
+function disableMate(){
+  mateActive = false;
+  verifyStep = null;
+  matchState = 'matched';
+  renderPartnerSection();
+}
+
+function tomorrowLabel(){
+  if(tomorrowState==='idle') return '내일도 만나기';
+  if(tomorrowState==='pending') return '상대 응답 기다리는 중…';
+  return '내일도 확정 🤝';
+}
+
+function receivedLogHTML(){
+  if(receivedLog.length===0) return '';
+  return `<div class="cheer-log">메이트가 보낸 메시지: "${receivedLog[receivedLog.length-1]}"</div>`;
+}
+
+function toggleMatchDemo(){
+  matchState = matchState==='matched' ? 'no-match' : 'matched';
+  renderPartnerSection();
+}
+
+function toggleTomorrow(){
+  if(tomorrowState !== 'idle') return;
+  tomorrowState = 'pending';
+  renderPartnerSection();
+  // 데모용: 실제로는 상대가 자정 전 직접 동의해야 확정되지만,
+  // 여기서는 상대의 동의를 흉내 내어 잠시 후 자동으로 확정 상태를 보여줍니다.
+  setTimeout(()=>{
+    tomorrowState = 'confirmed';
+    renderPartnerSection();
+  }, 1200);
+}
+
+function openCheer(kind){
+  cheerKind = kind;
+  const list = document.getElementById('cheerList');
+  const options = kind === 'start' ? CHEER_START : CHEER_DONE;
+  list.innerHTML = options.map(o=>`<button class="cheer-option" onclick="sendCheer(\`${o}\`)">${o}</button>`).join('');
+  document.getElementById('cheerModal').classList.add('open');
+}
+function closeCheer(){ document.getElementById('cheerModal').classList.remove('open'); }
+
+function sendCheer(text){
+  if(cheerKind === 'start') sentStartCheer = true; else sentDoneCheer = true;
+  const replies = ['고마워요, 저도 힘낼게요 💪', '오 좋아요, 같이 가봐요!', '저도 응원 보낼게요 🌱'];
+  receivedLog.push(replies[Math.floor(Math.random()*replies.length)]);
+  closeCheer();
+  renderPartnerSection();
+}
+
+/* ---------- 탭 전환 ---------- */
+function switchTab(tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`screen-${tab}`).classList.add('active');
+  document.querySelector(`.navbtn[data-tab="${tab}"]`).classList.add('active');
+}
+
+function openShare(){ document.getElementById('shareModal').classList.add('open'); }
+function closeShare(){ document.getElementById('shareModal').classList.remove('open'); }
+
+/* ---------- 초기화 ---------- */
+renderPromises();
+renderGallery();
+updateAll();
+renderPartnerSection();
+
+/* ---------- PWA: 서비스워커 등록 (홈 화면 설치 지원) ---------- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      /* 서비스워커 등록 실패해도 앱 사용 자체엔 지장 없음 */
+    });
+  });
+}
+</script>
+
+<!-- Firebase 로그인 + 데이터 저장 -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
+  } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+  import {
+    getFirestore, doc, getDoc, setDoc
+  } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBbqXAJ-RyO4Z7FFLYQ9sKkkQnocXPeW0w",
+    authDomain: "metoday-38d18.firebaseapp.com",
+    projectId: "metoday-38d18",
+    storageBucket: "metoday-38d18.firebasestorage.app",
+    messagingSenderId: "252964652022",
+    appId: "1:252964652022:web:e78d01e79807d64f51fdd7"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  const loginGate = document.getElementById('loginGate');
+  const loginBtn = document.getElementById('googleLoginBtn');
+  const loginStatus = document.getElementById('loginStatus');
+
+  loginBtn.addEventListener('click', () => {
+    loginStatus.textContent = '로그인 창을 여는 중…';
+    signInWithPopup(auth, provider).catch((err) => {
+      loginStatus.textContent = `로그인 실패: ${err.code || err.message}`;
+      console.error(err);
+    });
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      loginGate.style.display = 'none';
+      await pullFromCloud(user.uid);
+    } else {
+      loginGate.style.display = 'flex';
+      loginStatus.textContent = '';
+    }
+  });
+
+  async function pullFromCloud(uid){
+    try {
+      const snap = await getDoc(doc(db, 'users', uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        if (typeof loadPromisesFromCloud === 'function') {
+          loadPromisesFromCloud(data.promises);
+        }
+      }
+    } catch (err) {
+      console.error('불러오기 실패', err);
+    }
+  }
+
+  window.saveToCloud = function () {
+    const user = auth.currentUser;
+    if (!user || typeof getPromisesForSave !== 'function') return;
+    setDoc(doc(db, 'users', user.uid), {
+      promises: getPromisesForSave(),
+      updatedAt: Date.now()
+    }).catch((err) => console.error('저장 실패', err));
+  };
+
+  window.appSignOut = function () {
+    signOut(auth);
+  };
+</script>
+</body>
+</html>

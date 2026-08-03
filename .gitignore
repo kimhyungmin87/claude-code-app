@@ -1,0 +1,16 @@
+node_modules/
+.claude/settings.local.json
+
+# Android build outputs / local machine config
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/*.iml
+android/captures/
+android/.cxx/
+
+# Logs
+*.log
