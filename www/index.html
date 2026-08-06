@@ -227,14 +227,23 @@
   .gender-tag{font-weight:700; font-size:13px;}
   .gender-tag.male{color:#4DA3FF;}
   .gender-tag.female{color:#FF5C7A;}
+  .partner-profile{
+    display:flex; align-items:center; gap:10px; margin:12px 0;
+    padding:10px 12px; background:var(--bg-elevated); border:1px solid var(--line); border-radius:12px;
+  }
+  .partner-avatar{
+    flex-shrink:0; width:38px; height:38px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:17px; font-weight:700;
+  }
+  .partner-avatar.male{background:rgba(77,163,255,.15); color:#4DA3FF;}
+  .partner-avatar.female{background:rgba(255,92,122,.15); color:#FF5C7A;}
+  .partner-intro{font-size:12.5px; color:var(--text-dim); line-height:1.5;}
+  .mate-guide{
+    font-size:12px; color:var(--text-dim); text-align:center; line-height:1.6;
+    background:var(--bg-elevated); border:1px solid var(--line); border-radius:10px; padding:12px;
+  }
   .verify-form{display:flex; flex-direction:column; gap:8px; margin-top:4px;}
   .verify-form label{font-size:11px; color:var(--text-dim); margin-top:6px;}
-  .gender-select{display:flex; gap:8px;}
-  .gender-opt{
-    flex:1; background:var(--bg-elevated); border:1px solid var(--line); color:var(--text);
-    border-radius:10px; padding:10px; font-family:'Inter'; font-size:13px; cursor:pointer;
-  }
-  .gender-opt.sel{border-color:var(--violet); background:rgba(139,124,255,.15); color:var(--violet); font-weight:600;}
   .verify-form select, .verify-form input[type="date"], .verify-form input[type="number"], .verify-form input[type="text"]{
     background:var(--bg-elevated); border:1px solid var(--line); border-radius:10px; color:var(--text);
     padding:10px 12px; font-family:'Inter'; font-size:13px; width:100%;
@@ -642,12 +651,11 @@ let sentDoneCheer = false;
 let receivedLog = [];
 let cheerKind = null;
 
-/* 메이트 매칭 활성화 상태 — 기본은 비활성(샘플만 보임) */
+/* 메이트 매칭 활성화 상태 — 기본은 비활성(샘플만 보임). '내 계정'에서 본인인증을 완료해야
+   샘플 카드의 "메이트 매칭하기" 버튼이 뜨고, 눌러야 실제로 활성화된다. */
 let mateActive = false;
-let verifyStep = null;   // null | 'form' | 'verifying'
-let myProfile = { gender: '', region: '', birthdate: '' };
 let partnerGender = 'F';
-let verifyError = '';
+let partnerBio = '';
 
 /* 내 계정 프로필 */
 let myAccount = { photo: null, nickname: '', gender: '', age: '', region: '', isPrivate: false, bio: '' };
@@ -776,14 +784,65 @@ document.getElementById('newPromiseInput').addEventListener('keydown', e=>{
 /* ---------- AI 랜덤 미션 추천 ---------- */
 const MISSION_POOL = {
   mental: {
-    low:    ['5분 동안 눈 감고 심호흡하기', '오늘 감사한 일 한 가지 적어보기', '좋아하는 노래 한 곡 듣기'],
-    medium: ['10분 명상하기', '오늘 기분을 일기장에 적어보기', '좋아하는 책 10페이지 읽기'],
-    high:   ['30분 동안 디지털 기기 끄고 나만의 시간 갖기', '마음에 걸리던 일을 글로 정리해보기', '고민하던 사람에게 먼저 연락해보기'],
+    low: [
+      '5분 동안 눈 감고 심호흡하기', '오늘 감사한 일 한 가지 적어보기', '좋아하는 노래 한 곡 듣기',
+      '창밖 하늘 1분 동안 바라보기', '오늘의 기분을 이모지 하나로 표현해보기', '좋아하는 향 맡아보기',
+      '거울 보고 나에게 웃어주기', '오늘 나를 칭찬할 점 하나 찾기', '좋아하는 사진 한 장 다시 꺼내보기',
+      '3번 크게 심호흡하고 어깨 풀기', '좋아하는 문장 한 줄 필사하기',
+    ],
+    medium: [
+      '10분 명상하기', '오늘 기분을 일기장에 적어보기', '좋아하는 책 10페이지 읽기',
+      '좋아하는 영화 명장면 다시 보기', '나에게 편지 한 통 써보기', '오늘 하루를 세 문장으로 정리해보기',
+      '좋아하는 라디오나 팟캐스트 20분 듣기', '방 안 물건 하나 정리하며 마음도 정리하기',
+      '스트레스 받았던 순간을 글로 풀어보기', '좋아하는 그림이나 사진 따라 그려보기', '새로운 단어 5개 배워보기',
+    ],
+    high: [
+      '30분 동안 디지털 기기 끄고 나만의 시간 갖기', '마음에 걸리던 일을 글로 정리해보기', '고민하던 사람에게 먼저 연락해보기',
+      '나의 장점 10가지 적어보기', '최근 속상했던 일을 상대 입장에서 다시 써보기', '1년 뒤 나에게 편지 쓰기',
+      '미뤄뒀던 걱정거리 하나 직접 해결해보기', '감정일기 30분 동안 써보기',
+      '나를 힘들게 하는 습관 하나 적고 대안 찾아보기', '소중한 사람에게 손편지 쓰기', '혼자만의 시간 1시간 갖고 생각 정리하기',
+    ],
   },
   physical: {
-    low:    ['물 한 잔 더 마시기', '제자리에서 1분 스트레칭하기', '엘리베이터 대신 계단 3층 걷기'],
-    medium: ['10분 산책하기', '가벼운 운동 20분 하기', '홈트레이닝 15분 하기'],
-    high:   ['30분 이상 유산소 운동하기', '1시간 걷기 또는 조깅하기', '홈트 강도 높여서 30분 하기'],
+    low: [
+      '물 한 잔 더 마시기', '제자리에서 1분 스트레칭하기', '엘리베이터 대신 계단 3층 걷기',
+      '목과 어깨 가볍게 돌리기', '바른 자세로 5분 앉아있기', '창문 열고 환기시키기',
+      '발목 스트레칭 1분 하기', '심호흡하며 제자리 걷기 50걸음', '먼 곳 20초 보며 눈 스트레칭하기',
+      '손목 스트레칭하기', '햇빛 5분 쬐기',
+    ],
+    medium: [
+      '10분 산책하기', '가벼운 운동 20분 하기', '홈트레이닝 15분 하기',
+      '자전거 20분 타기', '계단 10층 오르내리기', '요가 동작 5가지 해보기',
+      '반신욕 15분 하기', '줄넘기 10분 하기', '근처 공원 한 바퀴 걷기',
+      '플랭크 3세트 하기', '스쿼트 30개 하기',
+    ],
+    high: [
+      '30분 이상 유산소 운동하기', '1시간 걷기 또는 조깅하기', '홈트 강도 높여서 30분 하기',
+      '등산이나 트레킹 다녀오기', '수영 30분 하기', '자전거로 1시간 라이딩하기',
+      '헬스장 가서 근력운동 하기', '필라테스나 요가 클래스 참여하기', '배드민턴이나 탁구 한 게임 하기',
+      '계단만 이용해서 하루 보내기', '새로운 운동 종목 하나 도전해보기',
+    ],
+  },
+  fun: {
+    low: [
+      '목욕하기', '좋아하는 간식 하나 사서 먹기', '오늘 입고 싶던 옷 입어보기',
+      '좋아하는 색으로 오늘 하루 포인트 주기', '웃긴 표정으로 셀카 찍어보기', '좋아하는 이모티콘으로 친구에게 인사하기',
+      '오늘의 운세 재미로 찾아보기', '좋아하는 디저트 사진 찾아보기', '반려동물이나 식물에게 말 걸어보기',
+      '소소한 행운의 물건 하나 지니고 다니기', '좋아하는 캐릭터 이모티콘 하나 골라보기',
+      '좋아하는 노래 크게 틀고 방 청소하기',
+    ],
+    medium: [
+      '요즘 유행하는 춤 배우기', '사랑하는 사람에게 "사랑해"라고 말하기', '고마운 사람과 약속 잡기',
+      '10분간 무작정 달리고 오기', '오랜만에 옛 친구에게 안부 연락하기', '노래방 가서 신나게 한 곡 부르기',
+      '새로운 카페 가서 나만의 시간 갖기', '좋아하는 유튜브 챌린지 따라 해보기', '가족에게 깜짝 칭찬 한마디 하기',
+      '좋아하는 만화나 예능 한 편 몰아보기', '즉흥적으로 동네 산책하며 사진 찍기',
+    ],
+    high: [
+      '처음 가보는 동네 탐방하기', '버킷리스트 하나 실행에 옮기기', '좋아하는 아티스트 공연 알아보고 예매해보기',
+      '새로운 취미 클래스 신청해보기', '친구들과 깜짝 모임 열기', '사랑하는 사람에게 손편지와 작은 선물하기',
+      '평소 안 해본 액티비티(방탈출, 볼링 등) 도전하기', '하루 동안 낯선 사람에게 친절 베풀기',
+      '여행 계획 하나 세워보기', '좋아하는 사람에게 서프라이즈 이벤트 준비하기', '새로운 언어로 인사말 배워서 써먹기',
+    ],
   },
 };
 const DIFFICULTY_LABEL = { low:'쉬움', medium:'보통', high:'어려움' };
@@ -957,12 +1016,11 @@ function submitAccountVerify(){
   renderAccount();
   /* 데모용: 실제로는 여기서 유료 본인인증 API를 호출합니다 */
   setTimeout(()=>{
-    myAccount.gender = myProfile.gender || (Math.random() < 0.5 ? 'M' : 'F');
+    myAccount.gender = Math.random() < 0.5 ? 'M' : 'F';
     myAccount.age = calculateAge(birth);
-    myProfile.gender = myAccount.gender;
-    myProfile.birthdate = birth;
     accountVerifying = false;
     renderAccount();
+    renderPartnerSection();
     if (typeof window.saveToCloud === 'function') window.saveToCloud();
   }, 1500);
 }
@@ -970,7 +1028,9 @@ function submitAccountVerify(){
 function resetAccountVerify(){
   myAccount.gender = '';
   myAccount.age = '';
+  mateActive = false;
   renderAccount();
+  renderPartnerSection();
   if (typeof window.saveToCloud === 'function') window.saveToCloud();
 }
 
@@ -1015,57 +1075,36 @@ function getAccountForSave(){
 function loadAccountFromCloud(acc){
   myAccount = Object.assign({ photo: myAccount.photo }, acc);
   renderAccount();
+  renderPartnerSection();
 }
 
 /* ---------- 메이트(파트너) 섹션 ---------- */
 const REGIONS = ['서울','경기','인천','부산','대구','대전','광주','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주','해외'];
 
+const PARTNER_BIOS = [
+  '작은 습관부터 차근차근 쌓아가는 중이에요 🌱',
+  '매일 조금씩 나아지는 하루를 만들고 있어요.',
+  '같이 응원하면서 끝까지 완주해봐요!',
+  '운동보다 마음 챙기기가 더 어렵더라구요 :)',
+  '요즘 아침 습관 만들기에 진심입니다.',
+  '느리더라도 꾸준히 가는 걸 좋아해요.',
+  '오늘도 서로 파이팅해요 💪',
+  '작심삼일 탈출이 이번 목표예요!',
+  '루틴 만드는 재미에 빠졌어요.',
+  '혼자보다 같이가 오래가더라구요.',
+];
+
+function isAccountVerified(){
+  return !!myAccount.gender && myAccount.age !== '' && myAccount.age != null;
+}
+
 function renderPartnerSection(){
   const wrap = document.getElementById('partnerSection');
   if(!wrap) return;
 
-  /* 1. 인증 폼 입력 중 */
-  if(verifyStep === 'form'){
-    wrap.innerHTML = `
-      <div class="partner-card">
-        <div class="partner-title"><span class="dot"></span>정보입력 후 본인인증하기</div>
-        <div class="verify-form">
-          <label>성별</label>
-          <div class="gender-select">
-            <button class="gender-opt ${myProfile.gender==='M'?'sel':''}" onclick="setGender('M')">남성</button>
-            <button class="gender-opt ${myProfile.gender==='F'?'sel':''}" onclick="setGender('F')">여성</button>
-          </div>
-          <div class="gender-note">성별은 매칭 조건이 아니라 화면 표시용이에요. 매칭 상대는 완전 랜덤으로 정해져요.</div>
-          <label>지역</label>
-          <select id="regionSelect">
-            <option value="">선택해주세요</option>
-            ${REGIONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
-          </select>
-          <label>생년월일</label>
-          <input type="date" id="birthdateInput">
-          <div class="verify-error">${verifyError}</div>
-          <button class="verify-submit" onclick="submitVerifyForm()">본인인증 진행하기</button>
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  /* 2. 인증 처리 중 (데모용 시뮬레이션) */
-  if(verifyStep === 'verifying'){
-    wrap.innerHTML = `
-      <div class="partner-card">
-        <div class="verifying-box">
-          <div class="verifying-spinner"></div>
-          <div>본인인증 처리 중…</div>
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  /* 3. 비활성 상태 — 샘플 화면만 보여줌 (실제와 동일한 레이아웃을 흐리게 미리보기) */
+  /* 1. 비활성 상태 — 샘플 화면만 보여줌 (실제와 동일한 레이아웃을 흐리게 미리보기) */
   if(!mateActive){
+    const accountVerified = isAccountVerified();
     const publicCountSample = partnerPromises.filter(p=>p.public).length;
     const sampleChips = partnerPromises.map(p=>{
       return p.public
@@ -1084,13 +1123,15 @@ function renderPartnerSection(){
             <button class="pill-btn" disabled>내일도 만나기</button>
           </div>
         </div>
-        <button class="verify-cta" onclick="startVerify()">본인인증하고 실제 메이트 매칭하기</button>
+        ${accountVerified
+          ? `<button class="verify-cta" onclick="activateMateMatching()">메이트 매칭하기</button>`
+          : `<div class="mate-guide">'내 계정' 페이지에서 본인 인증 후 매칭이 가능합니다.</div>`}
       </div>
     `;
     return;
   }
 
-  /* 4. 활성 상태 — 실제(데모상) 메이트 매칭 */
+  /* 2. 활성 상태 — 실제(데모상) 메이트 매칭 */
   if(matchState === 'no-match'){
     wrap.innerHTML = `
       <div class="no-match-card">
@@ -1118,6 +1159,10 @@ function renderPartnerSection(){
       <div class="partner-title"><span class="dot"></span>오늘의 프로젝트 메이트 <span class="gender-tag ${genderClass}">${genderSymbol}</span></div>
       <div class="partner-sub">메이트도 오늘 ${partnerPromises.length}개의 약속을 세웠어요 · 공개 ${publicCount}개</div>
       <div class="chip-row">${chips}</div>
+      <div class="partner-profile">
+        <div class="partner-avatar ${genderClass}">${genderSymbol}</div>
+        <div class="partner-intro">${partnerBio}</div>
+      </div>
       <div class="partner-actions">
         <button class="pill-btn ${sentStartCheer?'sent':''}" ${sentStartCheer?'disabled':''} onclick="openCheer('start')">${sentStartCheer?'응원 보냄 ✓':'응원 보내기'}</button>
         <button class="pill-btn" onclick="toggleTomorrow()">${tomorrowLabel()}</button>
@@ -1134,42 +1179,16 @@ function renderPartnerSection(){
   `;
 }
 
-function startVerify(){
-  verifyStep = 'form';
-  verifyError = '';
+function activateMateMatching(){
+  if(!isAccountVerified()) return;
+  mateActive = true;
+  partnerGender = Math.random() < 0.5 ? 'M' : 'F';
+  partnerBio = PARTNER_BIOS[Math.floor(Math.random()*PARTNER_BIOS.length)];
   renderPartnerSection();
-}
-
-function setGender(g){
-  myProfile.gender = g;
-  renderPartnerSection();
-}
-
-function submitVerifyForm(){
-  const region = document.getElementById('regionSelect').value;
-  const birth = document.getElementById('birthdateInput').value;
-  if(!myProfile.gender || !region || !birth){
-    verifyError = '성별, 지역, 생년월일을 모두 입력해주세요.';
-    renderPartnerSection();
-    return;
-  }
-  myProfile.region = region;
-  myProfile.birthdate = birth;
-  verifyError = '';
-  verifyStep = 'verifying';
-  renderPartnerSection();
-  /* 데모용: 실제로는 여기서 유료 본인인증 API를 호출합니다 */
-  setTimeout(()=>{
-    mateActive = true;
-    verifyStep = null;
-    partnerGender = Math.random() < 0.5 ? 'M' : 'F';
-    renderPartnerSection();
-  }, 1500);
 }
 
 function disableMate(){
   mateActive = false;
-  verifyStep = null;
   matchState = 'matched';
   renderPartnerSection();
 }
