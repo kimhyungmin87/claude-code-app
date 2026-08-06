@@ -1270,8 +1270,9 @@ if ('serviceWorker' in navigator) {
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   /* 일부 네트워크(에뮬레이터 등)에서 기본 gRPC 스트리밍이 막혀 "client is offline"으로
-     실패하는 경우가 있어, long-polling으로 자동 전환되도록 설정한다. */
-  const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+     실패하는 경우가 있어, long-polling을 강제로 사용하도록 설정한다.
+     (auto-detect 방식은 탐지용 사전 요청 자체가 막히는 환경에서는 소용이 없었음) */
+  const db = initializeFirestore(app, { experimentalForceLongPolling: true });
 
   const loginGate = document.getElementById('loginGate');
   const loginBtn = document.getElementById('googleLoginBtn');
